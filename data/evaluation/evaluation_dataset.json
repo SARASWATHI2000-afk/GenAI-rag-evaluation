@@ -1,0 +1,38 @@
+[
+  {
+    "id": 1,
+    "question": "What is the company's operational carbon reduction target?",
+    "expected_answer": "The company aims to reduce its operational carbon emissions by 40 percent by 2030 compared with its 2024 baseline.",
+    "relevant_source": "company_sustainability_policy.txt"
+  },
+  {
+    "id": 2,
+    "question": "What activities are included when the company measures emissions?",
+    "expected_answer": "The company measures emissions from electricity consumption, heating, company vehicles, and business travel.",
+    "relevant_source": "company_sustainability_policy.txt"
+  },
+  {
+    "id": 3,
+    "question": "What information should evidence identify for sustainability metrics?",
+    "expected_answer": "Evidence should identify the reporting period, measurement method, responsible department, and source of the information.",
+    "relevant_source": "reporting_guidelines.txt"
+  },
+  {
+    "id": 4,
+    "question": "Who maintains supporting evidence for reported sustainability metrics?",
+    "expected_answer": "The Sustainability Team maintains supporting evidence for reported sustainability metrics.",
+    "relevant_source": "company_sustainability_policy.txt"
+  },
+  {
+    "id": 5,
+    "question": "What should happen to sustainability data before it is included in external reporting?",
+    "expected_answer": "All sustainability data should be reviewed before it is included in external reporting.",
+    "relevant_source": "company_sustainability_policy.txt"
+  },
+  {
+    "id": 6,
+    "question": "What was the company's total revenue in 2025?",
+    "expected_answer": "The documents do not provide information about the company's total revenue in 2025.",
+    "relevant_source": null
+  }
+]
