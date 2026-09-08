@@ -106,26 +106,40 @@ Detailed evaluation results are available in:
 
 ## Project Structure
 
-~~~text
+```text
 GenAI-rag-evaluation/
 │
 ├── data/
 │   └── Evaluation dataset
 │
+├── docs/
+│   └── Project documentation
+│
+├── notebooks/
+│   └── Experiments and analysis
+│
 ├── outputs/
 │   └── evaluation_results.xlsx
 │
+├── images/
+│   ├── rag-architecture.png
+│   └── rag-evaluation-results.png
+│
 ├── src/
-│   ├── ingestion/
-│   ├── retrieval/
+│   ├── chunking/
+│   ├── evaluation/
 │   ├── generation/
-│   └── evaluation/
+│   ├── ingestion/
+│   ├── reranking/
+│   └── retrieval/
+│
+├── tests/
 │
 ├── .env.example
 ├── .gitignore
 ├── README.md
 └── requirements.txt
-~~~
+```
 
 ## How to Run
 
