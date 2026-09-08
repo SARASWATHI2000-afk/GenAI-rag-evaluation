@@ -6,7 +6,7 @@ This project focuses on evaluating the quality and reliability of responses gene
 
 The project implements a multi-metric evaluation pipeline that measures answer correctness, retrieval relevance, abstention accuracy, and faithfulness of generated responses against reference answers and retrieved evidence.
 
-The system combines semantic retrieval, cross-encoder reranking, local LLM-based response generation, and deterministic evaluation metrics to assess the overall performance of the RAG pipeline.
+The system combines semantic retrieval, cross-encoder reranking, local LLM-based response generation, and deterministic evaluation metrics to assess the performance of the RAG pipeline.
 
 ---
 
@@ -14,17 +14,17 @@ The system combines semantic retrieval, cross-encoder reranking, local LLM-based
 
 The pipeline:
 
-* Loads and processes evaluation documents
-* Splits documents into smaller chunks
+* Loads and processes sustainability documents
+* Splits documents into smaller chunks for retrieval
 * Generates embeddings using Sentence Transformers
 * Stores document embeddings in ChromaDB
 * Retrieves relevant documents using semantic similarity search
 * Retrieves the top 3 candidate documents for each query
 * Reranks retrieved documents using a Cross-Encoder
-* Generates grounded responses using a local LLM through Ollama
-* Evaluates generated responses using multiple evaluation metrics
-* Compares AI-generated responses with reference answers
-* Evaluates retrieval relevance, abstention behavior, and faithfulness
+* Selects the top 2 documents as generation context
+* Generates grounded responses using a local Llama 3.2 3B model through Ollama
+* Evaluates generated responses against reference answers and retrieved evidence
+* Measures answer correctness, retrieval relevance, abstention accuracy, and faithfulness
 * Produces structured evaluation results
 * Exports evaluation results to Excel
 
@@ -43,90 +43,99 @@ Embeddings
     ↓
 ChromaDB
     ↓
-Similarity Retrieval
+Similarity Search
     ↓
 Top 3 Candidate Documents
     ↓
 Cross-Encoder Reranking
     ↓
-Relevant Context
+Top 2 Documents
     ↓
-LLM
+Context
     ↓
-Generated Response
+Llama 3.2 3B
+(Ollama)
+    ↓
+Grounded Response
 ```
+
+### Document Loading
+
+The system loads `.txt` sustainability documents from the project's sample document directory using LangChain's `TextLoader`.
 
 ### Retrieval
 
 The retrieval layer uses **Sentence Transformers (`all-MiniLM-L6-v2`)** to generate embeddings and **ChromaDB** as the vector database.
 
-For each user query, the system performs similarity search and retrieves the **top 3 candidate documents**. These candidates are then passed to the reranking stage.
+For each user query, the system performs similarity search and retrieves the **top 3 candidate documents**.
 
 ### Reranking
 
-The retrieved candidates are reranked using the **`cross-encoder/ms-marco-MiniLM-L-6-v2`** model.
+The retrieved candidates are reranked using the **`cross-encoder/ms-marco-MiniLM-L-6-v2`** Cross-Encoder.
 
-The Cross-Encoder evaluates each query-document pair and assigns a relevance score. The documents are then sorted according to their reranker scores before being used for response generation.
+The Cross-Encoder evaluates each query-document pair and assigns a relevance score. The documents are sorted according to their reranker scores, and the **top 2 documents** are selected for response generation.
 
 ### Response Generation
 
-The reranked documents provide the context used by the generation component. A local LLM running through **Ollama** generates the final response based on the retrieved evidence.
+The selected documents are combined into a context and provided to a local **Llama 3.2 3B** model running through **Ollama**.
+
+The generation prompt instructs the model to answer using only the provided context and to abstain when the required information cannot be found in the retrieved documents.
 
 ---
 
 ## Evaluation Pipeline
 
 ```text
-Human / Reference Response
-              +
-       AI-Generated Response
-              +
-       Retrieved Context
-              ↓
-      Evaluation Metrics
-              ↓
- ┌────────────┬────────────┬────────────┬─────────────┐
- ↓            ↓            ↓            ↓
-Answer     Retrieval    Abstention   Faithfulness
-Correctness Relevance    Accuracy     Evidence Match
- └────────────┴────────────┴────────────┴─────────────┘
-              ↓
-       Aggregate Results
-              ↓
-       Excel Evaluation
+Reference Answer
+        +
+AI-Generated Answer
+        +
+Retrieved Context
+        ↓
+Evaluation Metrics
+        ↓
+ ┌───────────────┬───────────────────┬──────────────────┬────────────────┐
+ ↓               ↓                   ↓                  ↓
+Answer          Retrieval          Abstention        Faithfulness
+Correctness     Relevance           Accuracy           Evidence Match
+ └───────────────┴───────────────────┴──────────────────┴────────────────┘
+                         ↓
+                  Evaluation Results
+                         ↓
+                    Excel Output
 ```
 
-The evaluation pipeline uses deterministic metrics rather than an LLM-as-a-Judge approach.
+The evaluation pipeline uses **deterministic evaluation methods rather than an LLM-as-a-Judge approach**.
 
 ---
 
 ## Evaluation Criteria
 
-The evaluation pipeline assesses responses across four dimensions:
+The evaluation pipeline assesses responses across four dimensions.
 
 ### 1. Answer Correctness
 
 Measures the similarity between the generated response and the expected reference answer using **token-level F1**.
 
-A score threshold of **0.70** is used to determine whether the generated answer meets the correctness criterion.
+A threshold of **0.70** is used to determine whether the generated answer meets the correctness criterion.
 
 ### 2. Retrieval Relevance
 
 Checks whether the expected source document is present among the documents retrieved by the RAG system.
 
-This evaluates whether the retrieval component is finding the appropriate supporting information.
+This evaluates whether the retrieval component finds the appropriate supporting information.
 
 ### 3. Abstention Accuracy
 
-Evaluates whether the system appropriately refuses to answer questions when sufficient information is not available.
+Evaluates whether the system appropriately refuses to answer questions when sufficient information is not available in the provided documents.
 
-The evaluation checks for appropriate refusal or abstention behavior.
+The evaluation checks for appropriate refusal or abstention phrases.
 
 ### 4. Faithfulness
 
 Evaluates whether statements in the generated response are supported by the retrieved context.
 
-The current implementation uses deterministic evidence matching rather than an LLM judge.
+The current implementation uses deterministic evidence matching rather than an LLM-based judge.
 
 ---
 
@@ -151,21 +160,28 @@ outputs/evaluation_results.xlsx
 
 ## Tech Stack
 
-### GenAI & RAG
+### Programming & Frameworks
 
 * Python
 * LangChain
 * LangGraph
-* Ollama
-* Local LLM
 
-### Retrieval & Reranking
+### RAG & Retrieval
 
 * ChromaDB
 * Sentence Transformers
+* Hugging Face Transformers
 * `all-MiniLM-L6-v2`
-* Cross-Encoder
+
+### Reranking
+
+* Sentence Transformers Cross-Encoder
 * `cross-encoder/ms-marco-MiniLM-L-6-v2`
+
+### LLM & Generation
+
+* Ollama
+* Llama 3.2 3B
 
 ### Backend
 
@@ -176,6 +192,7 @@ outputs/evaluation_results.xlsx
 
 * Pandas
 * NumPy
+* Scikit-learn
 * OpenPyXL
 
 ---
@@ -186,7 +203,8 @@ outputs/evaluation_results.xlsx
 GenAI-rag-evaluation/
 │
 ├── data/
-│   └── Evaluation dataset
+│   └── sample_documents/
+│       └── *.txt
 │
 ├── outputs/
 │   └── evaluation_results.xlsx
@@ -194,6 +212,7 @@ GenAI-rag-evaluation/
 ├── src/
 │   ├── ingestion/
 │   ├── retrieval/
+│   ├── reranking/
 │   ├── generation/
 │   └── evaluation/
 │
@@ -226,25 +245,27 @@ Activate it on Windows:
 .venv\Scripts\activate
 ```
 
-### 3. Install dependencies
+### 3. Install Python dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Install Ollama
+### 4. Install and run Ollama
 
-Install Ollama and download the required local LLM model used by the project.
+Install Ollama separately and make sure it is running locally.
+
+Pull the required model:
+
+```bash
+ollama pull llama3.2:3b
+```
 
 ### 5. Run the pipeline
 
-Run the appropriate scripts under:
+Run the relevant scripts under the `src/` directory according to the project structure.
 
-```text
-src/
-```
-
-The retrieval, reranking, generation, and evaluation components can be executed according to the project structure.
+The pipeline performs document loading, retrieval, reranking, response generation, and evaluation.
 
 ---
 
@@ -252,14 +273,14 @@ The retrieval, reranking, generation, and evaluation components can be executed 
 
 This project demonstrates that building a RAG application is only one part of developing a reliable GenAI system.
 
-A production-oriented GenAI application also needs systematic evaluation to measure:
+A production-oriented GenAI application also requires systematic evaluation of different components of the pipeline, including:
 
 * Answer quality
 * Retrieval quality
 * Abstention behavior
 * Faithfulness to retrieved evidence
 
-The evaluation results demonstrate that strong retrieval performance does not necessarily guarantee strong answer correctness. This highlights the importance of evaluating different components of a RAG system independently.
+The evaluation results demonstrate that strong retrieval performance does not necessarily guarantee strong answer correctness. This highlights the importance of evaluating retrieval and generation independently.
 
 ---
 
@@ -267,10 +288,24 @@ The evaluation results demonstrate that strong retrieval performance does not ne
 
 * Add a larger evaluation dataset
 * Add automated evaluation dashboards
-* Compare multiple evaluation approaches
+* Compare multiple embedding models
+* Compare multiple reranking models
 * Add experiment tracking
 * Improve hallucination and faithfulness detection
-* Add additional retrieval metrics such as Recall@K and MRR
-* Evaluate different embedding and reranking models
+* Add retrieval metrics such as Recall@K and MRR
 * Integrate continuous evaluation into the RAG pipeline
 * Add automated regression testing for RAG responses
+* Evaluate different LLMs for response generation
+
+---
+
+## Key Features
+
+* **Semantic Retrieval** using Sentence Transformers and ChromaDB
+* **Cross-Encoder Reranking** for improved document relevance
+* **Local LLM Generation** using Llama 3.2 3B and Ollama
+* **Grounded Generation** using retrieved document context
+* **Abstention Handling** for questions without sufficient evidence
+* **Multi-Metric Evaluation** of RAG response quality
+* **Excel-Based Evaluation Reporting**
+* **Local and Reproducible Evaluation Pipeline**
