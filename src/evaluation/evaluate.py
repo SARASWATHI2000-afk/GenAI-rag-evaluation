@@ -1,4 +1,6 @@
 import json
+import os
+import pandas as pd
 
 from src.generation.generator import generate_answer
 
@@ -239,7 +241,80 @@ def calculate_metrics(results):
         "abstention_accuracy": abstention_accuracy,
         "faithfulness_accuracy": faithfulness_accuracy
     }
+def save_results(results, metrics):
+    """Save evaluation results to an Excel file."""
 
+    output_dir = "outputs"
+    os.makedirs(output_dir, exist_ok=True)
+
+    output_path = os.path.join(
+        output_dir,
+        "evaluation_results.xlsx"
+    )
+
+    # Detailed question-level results
+    detailed_results = []
+
+    for result in results:
+        detailed_results.append({
+            "Question ID": result["id"],
+            "Question": result["question"],
+            "Expected Answer": result["expected_answer"],
+            "Generated Answer": result["generated_answer"],
+            "Answer Correct": result["answer_correct"],
+            "Retrieval Relevant": result["retrieval_relevant"],
+            "Abstention Correct": result["abstention_correct"],
+            "Faithful": result["faithful"],
+            "Sources": ", ".join(
+                str(source)
+                for source in result["sources"]
+                if source
+            )
+        })
+
+    detailed_df = pd.DataFrame(detailed_results)
+
+    # Overall summary
+    summary_data = {
+        "Metric": [
+            "Total Questions",
+            "Answer Correctness",
+            "Retrieval Relevance",
+            "Abstention Accuracy",
+            "Faithfulness"
+        ],
+        "Score": [
+            len(results),
+            f"{metrics['answer_accuracy']:.2%}",
+            f"{metrics['retrieval_accuracy']:.2%}",
+            f"{metrics['abstention_accuracy']:.2%}",
+            f"{metrics['faithfulness_accuracy']:.2%}"
+        ]
+    }
+
+    summary_df = pd.DataFrame(summary_data)
+
+    # Write both sheets to Excel
+    with pd.ExcelWriter(
+        output_path,
+        engine="openpyxl"
+    ) as writer:
+
+        summary_df.to_excel(
+            writer,
+            sheet_name="Summary",
+            index=False
+        )
+
+        detailed_df.to_excel(
+            writer,
+            sheet_name="Detailed Results",
+            index=False
+        )
+
+    print(
+        f"\nEvaluation results saved to: {output_path}"
+    )
 
 if __name__ == "__main__":
 
@@ -254,6 +329,9 @@ if __name__ == "__main__":
     # --------------------------------------------------
 
     metrics = calculate_metrics(results)
+
+    # Save results to Excel
+    save_results(results, metrics)
 
     # --------------------------------------------------
     # Final summary
