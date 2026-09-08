@@ -75,6 +75,8 @@ Human / Reference Response
 
 ## Evaluation Results
 
+![RAG Evaluation Results](images/rag-evaluation-results.png)
+
 The current evaluation run produced the following results:
 
 | Metric | Score |
