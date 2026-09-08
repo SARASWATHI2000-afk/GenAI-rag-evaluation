@@ -32,6 +32,8 @@ The evaluator used in this project is **Qwen3 8B**, running locally through **Ol
 
 ## RAG Pipeline
 
+![GenAI RAG Evaluation Architecture](images/rag-architecture.png)
+
 ~~~text
 Documents
     ↓
